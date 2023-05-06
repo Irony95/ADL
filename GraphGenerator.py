@@ -4,6 +4,23 @@ from tqdm import tqdm
 nodes = {}
 maxDist = 9999999
 exportDelimiter = ","
+#the two points indicating the route, and the coefficient. 
+routeCoefficient = [
+    ("P13", "P12", 1.6),
+    ("P13", "P10", 1.6),
+    ("P11", "P12", 1.6),
+    ("P11", "P10", 1.6),
+    ("P25", "P24", 1.6),
+    ("P25", "P26", 1.6),
+    ("P27", "P26", 1.6),
+    ("P27", "P24", 1.6),
+
+    ("P21", "S12", 1.4),
+    ("P02", "P09", 1.4),
+    ("P08", "P28", 1.4),
+]
+minTurnCoefficient = 50
+turnCoefficient = 1.2
 
 class Node:
     def __init__(self, x, y, identifier) -> None:
@@ -22,7 +39,14 @@ class Node:
     def EuclideanDist(self, neighbour):
         xDist = abs(self.x - nodes[neighbour].x)
         yDist = abs(self.y - nodes[neighbour].y)
-        return math.sqrt(math.pow(xDist,2) + math.pow(yDist, 2))
+        pureDist = math.sqrt(math.pow(xDist,2) + math.pow(yDist, 2))
+
+        #multiply by any coefficients, as the route might take longer
+        for coeff in routeCoefficient:
+            if (self.identifier == coeff[0] or self.identifier == coeff[1]):
+                if (neighbour == coeff[0] or neighbour == coeff[1]):                    
+                    pureDist = pureDist*coeff[2]
+        return pureDist
     
     def AngleTo(self, point):
         xDist = abs(self.x - nodes[point].x)
@@ -73,6 +97,14 @@ def main():
 
             for neighbour in nodes[u].neighbours:
                 alt = dist[u] + nodes[u].EuclideanDist(neighbour)
+
+                #multiply with a turn coefficient if the car needs to turn(it takes longer to turn)
+                if (u in prev and prev[u] in prev):
+                    prevAngle = nodes[prev[u]].AngleTo(u)
+                    currentAngle = nodes[u].AngleTo(neighbour)
+                    if (abs(calculateAngleDiff(prevAngle, currentAngle)) > minTurnCoefficient):                    
+                        alt *= turnCoefficient
+                        
                 if (neighbour in locations and alt < dist[neighbour]):
                     dist[neighbour] = alt
                     prev[neighbour] = u
@@ -145,6 +177,15 @@ def exportNodes():
                 
             
     file.close()
+
+def calculateAngleDiff( start, end):
+
+    angleDiff = (end - start)
+    if (angleDiff > 180):
+        return angleDiff - 360
+    elif (angleDiff < -180):
+        return angleDiff + 360
+    return angleDiff
 
 if (__name__ == "__main__"):
     main()
