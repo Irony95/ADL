@@ -123,7 +123,7 @@ int P = 0, I = 0, D = 0, previousError = 0, PID = 0;
 int highSpeed = 100;
 //higher p = move to cnter faster, d higher is more dampening, higher i = faster reaction to steady state error
 //0.5, 0.01, 4
-double Kp = 0.9, Ki = 0.01, Kd = 7;
+double Kp = 1.15, Ki = 0.01, Kd = 9.5;
 
 //changing dist also means changing turning Cofficient
 int curvedTurnStartDist = 20;
@@ -418,7 +418,6 @@ DLL_EXPORT void GetCommand(int *AI_OUT)
 }
 void Game0()
 {
-    listout();
     char value[] = {pointsOfAction[nextPointOfAction][1], pointsOfAction[nextPointOfAction][2], '\0'};
     int pointID = atoi(value);
 
