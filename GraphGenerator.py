@@ -19,6 +19,7 @@ routeCoefficient = [
     ("P02", "P09", 1.4),
     ("P08", "P28", 1.4),
 ]
+#if we turn more than this angle, we add the coefficient
 minTurnCoefficient = 50
 turnCoefficient = 1.2
 
@@ -43,8 +44,8 @@ class Node:
 
         #multiply by any coefficients, as the route might take longer
         for coeff in routeCoefficient:
-            if (self.identifier == coeff[0] or self.identifier == coeff[1]):
-                if (neighbour == coeff[0] or neighbour == coeff[1]):                    
+            if ((self.identifier == coeff[0] and neighbour == coeff[1]) or 
+                (self.identifier == coeff[1] and neighbour == coeff[0])):                
                     pureDist = pureDist*coeff[2]
         return pureDist
     
@@ -122,6 +123,12 @@ def main():
                 pathing.reverse()
                 nodes[node].direction[startingLocation] = pathing.copy()
 
+                nodes[node].distanceTo[startingLocation] = round(dist[node])
+                nodes[startingLocation].distanceTo[node] = round(dist[node])
+            elif (startingLocation == node):
+                nodes[node].direction[startingLocation] = [node]
+                nodes[node].distanceTo[startingLocation] = 0
+
     exportNodes();
             
             
@@ -157,25 +164,27 @@ def populateNodes():
 
 def exportNodes():
     file = open("pathing.txt", "w")
-    for start in tqdm(nodes):
-        for end in nodes[start].direction:
-            truePath = ""
+    file.write("const char *pathings[][50] = {\n")
+    for k, start in tqdm(enumerate(nodes)):
+        for j, end in enumerate(nodes[start].direction):
+            truePath = "{"
             for i, point in enumerate(nodes[start].direction[end]):
+
+
                 if (i == len(nodes[start].direction[end])-1):
-                    truePath += exportDelimiter + point + "180"
+                    truePath += '"' + point + "180" + '"'
                 else:
                     #make sure the angle is 3 digit long
                     angle = str(nodes[point].AngleTo(nodes[start].direction[end][i+1]))
                     while (len(angle) < 3):
                         angle = "0" + angle
 
-                    truePath += exportDelimiter + point + angle
+                    truePath +=  '"' + point + angle + '",' 
 
+            file.write(truePath + "},")
+        file.write("\n")
 
-            file.write(f"{start}:{end}: " + truePath)
-            file.write("\n")
-                
-            
+    file.write("};")
     file.close()
 
 def calculateAngleDiff( start, end):
