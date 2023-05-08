@@ -20,7 +20,7 @@ routeCoefficient = [
     ("P08", "P28", 1.4),
 ]
 #if we turn more than this angle, we add the coefficient
-minTurnCoefficient = 50
+minTurnCoefficient = 30
 turnCoefficient = 1.2
 
 class Node:
@@ -166,16 +166,27 @@ def exportNodes():
     file = open("pathing.txt", "w")
     file.write("const char *pathings[][50] = {\n")
     for k, start in tqdm(enumerate(nodes)):
+        if (start[0] == "P"):
+            continue
         for j, end in enumerate(nodes[start].direction):
             truePath = "{"
+            previousAngle = -360
             for i, point in enumerate(nodes[start].direction[end]):
 
 
                 if (i == len(nodes[start].direction[end])-1):
                     truePath += '"' + point + "180" + '"'
                 else:
+                    angle = nodes[point].AngleTo(nodes[start].direction[end][i+1])
+
+                    #we do not bother to add the point, as we do not need to turn at this angle
+                    if (abs(angle - previousAngle) < minTurnCoefficient):
+                        previousAngle = angle
+                        continue
+                    previousAngle = angle
+
+                    angle = str(angle)
                     #make sure the angle is 3 digit long
-                    angle = str(nodes[point].AngleTo(nodes[start].direction[end][i+1]))
                     while (len(angle) < 3):
                         angle = "0" + angle
 
