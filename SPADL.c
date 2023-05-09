@@ -236,12 +236,20 @@ void GameStart()
 
 void AILoopStart()
 {
+    printf("%i\n", loadedPoints);  
 //Add your code here
     if (!loadedPoints)
     {
+        printf("loaded\n");       
+        printf("loaded\n");      
+        printf("loaded\n");     
+        printf("loaded\n");     
+        printf("loaded\n");     
+        printf("loaded\n");     
+        printf("loaded\n");     
         loadedPoints = true;
         FILE *fp;
-        fp  = fopen ("pathing.txt", "r");
+        fp  = fopen ("path.txt", "r");
         int i = 0;
         int j = 0;
         if (fp != NULL)
@@ -262,7 +270,7 @@ void AILoopStart()
                 }
             }
             fclose(fp);
-        }
+        }         
     }
 }
 
@@ -353,7 +361,8 @@ DLL_EXPORT void GetCommand(int *AI_OUT)
 }
 void Game0()
 {
-    char value[] = {pointsOfAction[nextPointOfAction][1], pointsOfAction[nextPointOfAction][2], '\0'};
+    printf("asdfasfasdfasfd");
+    char value[] = {pointsOfAction[nextPointOfAction][1], pointsOfAction[nextPointOfAction][2], '\0'};    
     int pointID = atoi(value);
 
     char angleStr[] = {pointsOfAction[nextPointOfAction][3], pointsOfAction[nextPointOfAction][4], pointsOfAction[nextPointOfAction][5], '\0'};
