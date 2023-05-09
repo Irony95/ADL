@@ -6,18 +6,18 @@ maxDist = 9999999
 exportDelimiter = ","
 #the two points indicating the route, and the coefficient. 
 routeCoefficient = [
-    ("P13", "P12", 1.6),
-    ("P13", "P10", 1.6),
-    ("P11", "P12", 1.6),
-    ("P11", "P10", 1.6),
-    ("P25", "P24", 1.6),
-    ("P25", "P26", 1.6),
-    ("P27", "P26", 1.6),
-    ("P27", "P24", 1.6),
+    ("P13", "P12", 1.5),
+    ("P13", "P10", 1.5),
+    ("P11", "P12", 1.5),
+    ("P11", "P10", 1.5),
+    ("P25", "P24", 1.5),
+    ("P25", "P26", 1.5),
+    ("P27", "P26", 1.5),
+    ("P27", "P24", 1.5),
 
-    ("P21", "S12", 1.4),
-    ("P02", "P09", 1.4),
-    ("P08", "P28", 1.4),
+    ("P21", "S12", 1.2),
+    ("P02", "P09", 1.2),
+    ("P08", "P28", 1.2),
 ]
 #if we turn more than this angle, we add the coefficient
 minTurnCoefficient = 30
@@ -165,7 +165,7 @@ def populateNodes():
 def exportNodes():
     file = open("pathing.txt", "w")
     file.write("const char *pathings[][50] = {\n")
-    for k, start in tqdm(enumerate(nodes)):
+    for k, start in enumerate(nodes):
         if (start[0] == "P"):
             continue
         for j, end in enumerate(nodes[start].direction):
