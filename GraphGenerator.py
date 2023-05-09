@@ -198,6 +198,21 @@ def exportNodes():
     file.write("};")
     file.close()
 
+
+    file = open("distances.txt", "w")
+    file.write("const int dist[] = {")
+    for k, start in enumerate(nodes):
+        if start[0] == "P":
+            continue
+        for end, dist in nodes[start].distanceTo.items():
+            if (end[0] == "P'"):
+                continue
+            file.write(str(dist) + ",")
+        file.write("\n")
+    file.write("};")
+    file.close()
+                               
+
 def calculateAngleDiff( start, end):
 
     angleDiff = (end - start)
