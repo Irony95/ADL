@@ -6,18 +6,18 @@ maxDist = 9999999
 exportDelimiter = ","
 #the two points indicating the route, and the coefficient. 
 routeCoefficient = [
-    ("P13", "P12", 1.5),
-    ("P13", "P10", 1.5),
-    ("P11", "P12", 1.5),
-    ("P11", "P10", 1.5),
-    ("P25", "P24", 1.5),
-    ("P25", "P26", 1.5),
-    ("P27", "P26", 1.5),
-    ("P27", "P24", 1.5),
+    ("P13", "P12", 1.3),
+    ("P13", "P10", 1.3),
+    ("P11", "P12", 1.3),
+    ("P11", "P10", 1.3),
+    ("P25", "P24", 1.3),
+    ("P25", "P26", 1.3),
+    ("P27", "P26", 1.3),
+    ("P27", "P24", 1.3),
 
-    ("P21", "S12", 1.2),
-    ("P02", "P09", 1.2),
-    ("P08", "P28", 1.2),
+    ("P21", "S12", 1.4),
+    ("P02", "P09", 1.4),
+    ("P08", "P28", 1.4),
 ]
 #if we turn more than this angle, we add the coefficient
 minTurnCoefficient = 30

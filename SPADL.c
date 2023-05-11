@@ -47,9 +47,13 @@ int a[100],b[100],c[100],d[100];
 char pointsOfAction[100][100];
 
 char pathing[2500][50][50];
-int distanceTo[2500];
 int nextPointOfAction = 0; 
 int loadedPoints = 0;
+
+void CalculateRoute(int arr[7]);
+
+//in units per second
+const double averageSpeed = 73.5;
 
 //structured such that an int is mapped to a point. C01 = 0, C02 = 1, C03 = 2, S01 = 3, S02 = 4, S03 = 5......
 //each point has 50 paths, 1 per stn. Or more simply, index value * 50 is the start, add a the value for end stn i.e.
@@ -76,7 +80,7 @@ const char *pathings[][50] = {
 {"S15270","P24311","P25000","P17270","C01180"},{"S15270","P24225","P27180","P07270","C02180"},{"S15090","P22180","P32225","P31270","C03180"},{"S15270","P24311","P25000","S01180"},{"S15090","P22000","P20323","P19270","S02180"},{"S15270","P24311","P25000","P17270","S03180"},{"S15270","P24311","P25000","P17270","S04180"},{"S15270","P24311","P25000","P17270","P15214","P14180","S05180"},{"S15270","P24311","P25225","P26270","P02000","S06180"},{"S15270","P24225","P27180","P07270","P04315","P03000","S07180"},{"S15270","P24225","P27180","P28270","P08174","S08180"},{"S15270","P24225","P27180","S09180"},{"S15090","P22180","P29270","S10180"},{"S15270","P24311","P25225","P26270","P09180","S11180"},{"S15270","P24311","P25000","P17270","P16180","P13139","P12090","S12180"},{"S15090","P22000","P20323","P19270","P18180","S13180"},{"S15090","P22000","S14180"},{"S15180"},{"S15270","P23000","P18270","P17180"},{"S15270","P23000","P18180"},{"S15090","P22000","P20323","P19180"},{"S15270","P23000","P18270","P16180"},{"S15270","P23000","P18270","P15180"},{"S15270","P23000","P18270","P15214","P14180"},{"S15270","P23000","P21278","P13221","P10270","P01180"},{"S15270","P24311","P25225","P26270","P02180"},{"S15270","P24225","P27180","P07270","P04315","P03180"},{"S15270","P24225","P27180","P07270","P04180"},{"S15270","P24225","P27180","P07270","P05180"},{"S15270","P24225","P27180","P07270","P06180"},{"S15270","P24225","P27180","P07180"},{"S15270","P23180","P30180"},{"S15090","P22180","P32225","P31180"},{"S15090","P22180","P32180"},{"S15090","P22180","P29180"},{"S15090","P22180"},{"S15090","P22000","P20180"},{"S15270","P23000","P21278","P13180"},{"S15270","P23000","P21270","P12180"},{"S15270","P23000","P21270","P12225","P11180"},{"S15270","P23000","P21278","P13221","P10180"},{"S15270","P24225","P27180","P28270","P08180"},{"S15270","P23000","P21180"},{"S15270","P23180"},{"S15270","P24311","P25180"},{"S15270","P24180"},{"S15270","P24225","P27180"},{"S15270","P24311","P25225","P26180"},{"S15270","P24311","P25225","P26270","P09180"},{"S15270","P24225","P27180","P28180"},
 };
 //same idea as above ^ 
-const int dist[] = {0,974,1257,222,185,75,115,291,391,541,752,947,1131,864,397,342,593,722,135,235,320,65,155,208,341,441,626,777,802,1014,997,1047,1081,873,793,693,414,150,276,420,276,702,392,672,337,500,688,493,670,897,
+const int distanceTo[] = {0,974,1257,222,185,75,115,291,391,541,752,947,1131,864,397,342,593,722,135,235,320,65,155,208,341,441,626,777,802,1014,997,1047,1081,873,793,693,414,150,276,420,276,702,392,672,337,500,688,493,670,897,
 974,0,300,1066,1048,938,748,433,333,183,420,360,552,360,1088,1215,1062,921,998,1098,1183,798,583,468,383,283,67,35,300,150,250,350,430,550,702,962,1142,741,852,636,538,471,1165,871,773,666,470,570,410,410,
 1257,300,0,780,1056,1068,1258,865,765,615,360,120,264,360,1002,800,524,569,830,850,755,1208,1102,900,815,715,427,335,250,150,50,50,130,190,324,424,604,1031,780,576,780,411,750,525,535,378,230,372,410,170,
 222,1066,780,0,120,132,322,589,689,829,1112,564,677,481,679,264,499,402,50,170,255,272,362,456,639,591,914,962,877,631,614,663,891,743,663,452,336,398,574,778,574,905,314,352,115,234,368,227,351,514,
@@ -104,7 +108,7 @@ int P = 0, I = 0, D = 0, previousError = 0, PID = 0;
 int highSpeed = 100;
 //higher p = move to cnter faster, d higher is more dampening, higher i = faster reaction to steady state error
 //0.5, 0.01, 4
-double Kp = 0.95, Ki = 0.01, Kd = 9.5;
+double Kp = 1.1, Ki = 0.01, Kd = 6;
 
 //changing dist also means changing turning Cofficient
 int curvedTurnStartDist = 20;
@@ -174,9 +178,6 @@ int TurnTo(int curRot, int targetRot)
     return 1;
 }
 
-
-
-
 //calculates the difference in angle, +\- with respect to start facing
 int calculateAngleDiff(int start, int end)
 {
@@ -193,11 +194,8 @@ int CurvedTurnTo(int curRot, int targetRot)
     int angleDiff = calculateAngleDiff(curRot, targetRot);
 
     //if turning is done
-
-    printf("%i\n", angleDiff);
     if (angleDiff <= angularErrorThreshold && angleDiff >= -angularErrorThreshold)
     {
-        printf("Finished Turning\n");
         Duration = 0;
         return 1;
     }
@@ -226,7 +224,8 @@ struct DeliveryItem
     int ItemScore;
     int CurStatus; //1:at Center; 2:on Car; 3:at Station;
 } DeliveryItemList[100]; //All Items
-
+int onCar[6] = {0,1,2,3,4,5};
+int nextParcelID = 6;
 DLL_EXPORT void AddDeliveryItem(int ItemID, int CenterID, int StationID, int ItemScore, int Deadline, int CurStatus)
 {
     if (ItemID < 0 || ItemID>99) {
@@ -271,6 +270,7 @@ static void listout()
         printf("StnID : %d | ",b[i]);
         printf("Score : %d | ",c[i]);
         printf("Deadline : %d | ",d[i]);
+        printf("CarStatus : %i| ", DeliveryItemList[i].CurStatus);
         printf("\n");
     }
     printf("**************************\n\n\n");
@@ -288,7 +288,7 @@ void AILoopStart()
     {
         loadedPoints = true;
         FILE *fp;
-        fp  = fopen ("pathing.txt", "r");
+        fp  = fopen ("path.txt", "r");
         int i = 0;
         int j = 0;
         if (fp != NULL)
@@ -398,26 +398,155 @@ DLL_EXPORT void GetCommand(int *AI_OUT)
     AI_OUT[2] = LED;
     AI_OUT[3] = MyState;
 }
-int *CalculateRoute()
-{
-    int j = 0;
-    struct DeliveryItem onCar[6] = {};
-    for (int i = 0; i < 100;i++)
-    {
-        if (j == 5) { break; }
-        if (DeliveryItemList[i].CurStatus == 2)
-        {
-            onCar[j] = DeliveryItemList[i];
-            j++;
-        }
-    }
 
-    return NULL;
+void swap(int *a, int *b)
+{
+    int temp;
+    temp = *a;
+    *a = *b;
+    *b = temp;
 }
 
+void permutation(int arr[7], int start, int end)
+{
+    if(start==end)
+    {
+        CalculateRoute(arr);
+        return;
+    }
+    int i;
+    for(i=start;i<=end;i++)
+    {
+        //swapping numbers
+        swap((arr+i), (arr+start));
+        //fixing one first digit
+        //and calling permutation on
+        //the rest of the digits
+        permutation(arr, start+1, end);
+        swap((arr+i), (arr+start));
+    }
+}
+
+int CalculatePoints(int packageID, double timeTo)
+{
+    double overshotTime = (Time/100 + timeTo) - DeliveryItemList[packageID].Deadline;
+    switch (DeliveryItemList[packageID].ItemScore)
+    {
+        case 20:
+            return 20;
+            break;
+        case 30:
+            if (overshotTime < 0) { return 30; }
+            if (overshotTime > 20) { return 10; }
+            return 30-overshotTime;
+            break;
+        case 60:
+            if (overshotTime < 0) { return 60; }
+            if (overshotTime > 25) { return 10; }
+            return 60-2*overshotTime;
+            break;
+        case 90:
+            if (overshotTime < 0) { return 90; }
+            if (overshotTime > 26) { return 10; }
+            return 90-3*overshotTime;
+            break;
+    }
+}
+
+struct Route
+{
+    int calculatedTimeTotal;
+    double worth;
+    int pathing[7];
+} fastestRoute;
+void CalculateRoute(int arr[7])
+{
+    double runningTime = 0;
+    int runningPoints = 0;
+
+    //this is a bit of a cheaty hashmap ish solution
+    int visited[20] = {0};
+    for (int i = 0;i < 7;i ++)
+    {
+        int distToNext;
+        if (i == 0)
+        {
+            distToNext = distanceTo[0 * 50 + DeliveryItemList[arr[i]].CollectionPtID+2];
+        }
+        else if (arr[i] == -1)
+        {
+            distToNext = distanceTo[(DeliveryItemList[arr[i-1]].CollectionPtID+2) * 50 + 0];
+        }
+        else
+        {
+            distToNext = distanceTo[(DeliveryItemList[arr[i-1]].CollectionPtID+2) * 50 + DeliveryItemList[arr[i]].CollectionPtID+2];
+        }
+                
+        runningTime += (double)distToNext / averageSpeed;
+        //for delivery or pickup
+
+        if (arr[i] == -1) { break; }
+        runningTime += 2;
+
+        //have not deposited
+        if (visited[DeliveryItemList[arr[i]].CollectionPtID] != 1) 
+        {
+            //to account for multiple packages being dropped off at the same station
+            for (int j = 0;j < 6;j++)
+            {
+                if (DeliveryItemList[onCar[j]].CollectionPtID == DeliveryItemList[arr[i]].CollectionPtID)
+                {
+                    runningPoints += CalculatePoints(onCar[j], runningTime);                     
+                }
+            }
+        }
+        visited[DeliveryItemList[arr[i]].CollectionPtID] = 1;
+    }
+    double worth = runningPoints - (2 * runningTime);
+    if (worth > fastestRoute.worth)
+    {
+        printf("new high worth, points at %i, runTime at %f, worth of %f | ", runningPoints, runningTime, worth);
+        for (int i = 0;i < 7;i++)
+        {
+            if (arr[i] == -1)
+            {
+                printf("C01,");
+                break;
+            }
+            else
+            {
+                printf("%i,", DeliveryItemList[arr[i]].CollectionPtID);
+
+            }
+        }
+        printf("\n");
+        fastestRoute.calculatedTimeTotal = runningTime;
+        fastestRoute.worth = worth;
+        memcpy(fastestRoute.pathing, arr, sizeof(fastestRoute.pathing));
+    }
+}
+
+void BruteForceBestPath()
+{
+    int bruteForcePts[7];
+    memcpy(bruteForcePts, onCar, sizeof(bruteForcePts));
+    bruteForcePts[6] = -1;
+    fastestRoute.worth = -999999;
+
+
+    permutation(bruteForcePts, 0, 6);
+    printf("\n");
+    printf("best stn path is, with worth of %f, ", fastestRoute.worth);
+    for (int i = 0;i < 7;i++)
+    {
+        if (fastestRoute.pathing[i] == -1) {printf("C01"); break; }
+        printf("%i, ", DeliveryItemList[fastestRoute.pathing[i]].CollectionPtID);
+    }
+    printf("\n");
+}
 
 void Game0()
-{
+{    
     char value[] = {pointsOfAction[nextPointOfAction][1], pointsOfAction[nextPointOfAction][2], '\0'};
     int pointID = atoi(value);
 
@@ -488,22 +617,53 @@ void Game0()
         nextPointOfAction++;
         
     }
-    else if(pointsOfAction[nextPointOfAction][0] == 'S' && StnID == pointID && StnDist>=-7 && StnDist<=7)
+    else if(pointsOfAction[nextPointOfAction][0] == 'S' && StnID == pointID && StnDist>=-10 && StnDist<=10)
     {
         angleToTurn = nextAngle;
         
         Duration = 80;
         CurAction =3;
         nextPointOfAction++;
-        
+
+
+        //remove from onCar, and set status to delivered
+        for (int i =0;i < 6;i++)
+        {
+            if (StnID == DeliveryItemList[onCar[i]].CollectionPtID)
+            {                
+                onCar[i] = -1;
+            }
+        }
+        for (int i =0;i < 6;i++)
+        {
+            printf("%i, ", onCar[i]);
+        }
+        printf("\n");
     }
-    else if(pointsOfAction[nextPointOfAction][0] == 'C' && CtrID == pointID && CtrDist>=-7 && CtrDist<=7)
+    else if(pointsOfAction[nextPointOfAction][0] == 'C' && CtrID == pointID && CtrDist>=-10 && CtrDist<=10)
     {
         angleToTurn = nextAngle;
         
         Duration = 80;
         CurAction =3;
         nextPointOfAction++;
+
+        for (int i = 0;i < 6;i++)
+        {
+            if (onCar[i] == -1)
+            {
+                onCar[i] = nextParcelID;
+                nextParcelID++;
+            }
+        }
+        for (int i =0;i < 6;i++)
+        {
+            printf("%i, ", onCar[i]);
+        }
+        printf("\n");
+        listout();
+
+        BruteForceBestPath();
         
     }
     else if (pointsOfAction[nextPointOfAction][0] == 'B')
@@ -535,10 +695,6 @@ void Game0()
             WheelLeft=0;
             WheelRight=0;
             LED=1;
-            if (Duration == 1)
-            {
-                listout();
-            }
             if (angleToTurn < RotationZ-30 || angleToTurn > RotationZ+30)
             {
                 needTurnAfterStation = 1;
