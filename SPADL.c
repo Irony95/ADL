@@ -47,8 +47,8 @@ int a[100],b[100],c[100],d[100];
 
 // set loadedPoints if we want to load pathing locally, otherwise set to 0 to read from file
 //loading is from the file located at [C:\CoSpaceRobot Studio\ADL-2023\ADL\Bin\path.txt]
-int loadedPoints = 1;
-int stationsToVisit[1000] = {0, 3, 10, 2, 0};
+int loadedPoints = 0;
+int stationsToVisit[1000] = {};
 int nextStation = 1;
 
 int pathingIndex = 1;
@@ -265,14 +265,28 @@ void AILoopStart()
         if (fp != NULL)
         {
             stationsToVisit[0] = 0;
-            char placeholder[2];
+            char placeholder[5];
             int i = 0;
+            int j = 1;
             while (!feof(fp))
             {
-                
+                char c = fgetc(fp);                                   
+                if (c == '\n')
+                {
+                    placeholder[i] = '\0';
+                    stationsToVisit[j] = atoi(placeholder);
+                    i = 0;
+                    j++;
+                    memset(placeholder, 0, sizeof(placeholder));
+                }
+                else
+                {
+                    placeholder[i] = c;
+                    i++;
+                }                
             }
             fclose(fp);
-        }         
+        }        
     }
 }
 
@@ -373,8 +387,6 @@ void Game0()
     //the current route we are following
     int start = stationsToVisit[nextStation-1] == 0 ? 0 : stationsToVisit[nextStation-1] + 2;
     int end = stationsToVisit[nextStation] == 0 ? 0 : stationsToVisit[nextStation] + 2;
-    printf(pathings[start * 50 + end][pathingIndex]);
-    printf("\n");
 
     char value[] = {pathings[start * 50 + end][pathingIndex][1], pathings[start * 50 + end][pathingIndex][2], '\0'};    
     int pointID = atoi(value);

@@ -1,1 +1,1 @@
-char pointsOfAction[100][100] = {"S03270", "P16180", "P13110", "P12090", "S12090", };
+int stationsToVisit[1000] = {3, 10, 2, 0, 5, };
