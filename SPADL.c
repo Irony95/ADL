@@ -11,8 +11,8 @@
 
 #define CsBot_AI_H//DO NOT delete this line
 #ifndef CSBOT_REAL
-#include <windows.h>
 #include <stdio.h>
+#include <windows.h>
 #include <stdlib.h>
 #include <math.h>
 #define DLL_EXPORT extern __declspec(dllexport)
@@ -44,12 +44,15 @@ int LED = 0;
 int AI_TeamID = 1;   //Robot Team ID.    1:Blue Ream;    2:Red Team.
 int AI_SensorNum = 15;
 int a[100],b[100],c[100],d[100];
-char pointsOfAction[100][100];
 
-char pathing[2500][50][50];
 int distanceTo[2500];
 int nextPointOfAction = 0; 
-int loadedPoints = 0;
+
+// set loadedPoints if we want to load pathing locally, otherwise set to 0 to read from file
+//loading is from the file located at [C:\CoSpaceRobot Studio\ADL-2023\ADL\Bin\path.txt]
+int loadedPoints = 1;
+char pointsOfAction[100][100] = {"S03270", "P16180", "P13110", "P12090", "S1209", };
+
 
 int angleToTurn = 0;
 int needTurnAfterStation = 0;
@@ -142,15 +145,13 @@ int calculateAngleDiff(int start, int end)
 
 int CurvedTurnTo(int curRot, int targetRot)
 {
+    printf("Curved\n");
     int angularErrorThreshold = 20;
     int angleDiff = calculateAngleDiff(curRot, targetRot);
 
     //if turning is done
-
-    printf("%i\n", angleDiff);
     if (angleDiff <= angularErrorThreshold && angleDiff >= -angularErrorThreshold)
     {
-        printf("Finished Turning\n");
         Duration = 0;
         return 1;
     }
@@ -235,18 +236,10 @@ void GameStart()
 }
 
 void AILoopStart()
-{
-    printf("%i\n", loadedPoints);  
+{  
 //Add your code here
     if (!loadedPoints)
     {
-        printf("loaded\n");       
-        printf("loaded\n");      
-        printf("loaded\n");     
-        printf("loaded\n");     
-        printf("loaded\n");     
-        printf("loaded\n");     
-        printf("loaded\n");     
         loadedPoints = true;
         FILE *fp;
         fp  = fopen ("path.txt", "r");
@@ -351,6 +344,12 @@ static void run()
     WheelRight = highSpeed-PID; 
 }
 
+int IsEdgeTurn(int id)
+{
+    if (id == 19 || id == 32 || id == 4 || id==14) {return 90; }
+    else if (id == 20 || id == 31 || id == 3 || id == 15) {return -90; }
+    return 0;
+}
 
 DLL_EXPORT void GetCommand(int *AI_OUT)
 {
@@ -361,7 +360,6 @@ DLL_EXPORT void GetCommand(int *AI_OUT)
 }
 void Game0()
 {
-    printf("asdfasfasdfasfd");
     char value[] = {pointsOfAction[nextPointOfAction][1], pointsOfAction[nextPointOfAction][2], '\0'};    
     int pointID = atoi(value);
 
@@ -432,6 +430,13 @@ void Game0()
         nextPointOfAction++;
         
     }
+    //turning on the edge, this code makes it smoother lmao
+    else if(abs(IsEdgeTurn(NavID)) != 0 && NavDist<=5)
+    {
+        angleToTurn = RotationZ + IsEdgeTurn(NavID);
+        CurAction = 2;  
+        Duration = 10; 
+    }
     else if(pointsOfAction[nextPointOfAction][0] == 'S' && StnID == pointID && StnDist>=-7 && StnDist<=7)
     {
         angleToTurn = nextAngle;
@@ -498,7 +503,7 @@ void Game0()
             if (angleToTurn < RotationZ-30 || angleToTurn > RotationZ+30)
             {
                 needTurnAfterStation = 1;
-            }
+            }        
         default:
             break;
     }
