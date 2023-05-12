@@ -1,6 +1,6 @@
 output = open("output.txt", "w")
 
-output.write("char pointsOfAction[100][100] = {")
+output.write("int stationsToVisit[1000] = {")
 with open("C:\\CoSpaceRobot Studio\\ADL-2023\\ADL\\Bin\\path.txt") as f:
     lines = f.readlines()
     for i, line in enumerate(lines):
