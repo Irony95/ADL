@@ -504,6 +504,8 @@ int angle;
 int turningAngle;
 int pathIndex = 0;
 
+double turningCoefficient = 0.9;
+
 void Game0()
 {
     route[0] = 0;
@@ -577,21 +579,24 @@ void Game0()
         Duration = 80;
     }
     //Turn in Roundabout
-    else if(NavID == pathID && pathings[start * 50 + end][pathIndex][0] == 'P' && NavDist <= 7 && (NavID == 27 || NavID == 26 || NavID == 25 || NavID == 24 || NavID == 10 || NavID == 11 || NavID == 12 || NavID == 13))
+    else if(NavID == pathID && pathings[start * 50 + end][pathIndex][0] == 'P' && NavDist <= 15 && (NavID == 27 || NavID == 26 || NavID == 25 || NavID == 24 || NavID == 10 || NavID == 11 || NavID == 12 || NavID == 13))
     {
         //printf("Turning\n");
         pathIndex++;
         turningAngle = angle;
+        turningCoefficient = 1.3;
 
-        CurAction = 3;
+        CurAction = 2;
         Duration = 0;        
     }
     //Smooth turn 
-    else if(NavID == pathID && pathings[start * 50 + end][pathIndex][0] == 'P' && NavDist <= 20 && !(NavID == 27 || NavID == 26 || NavID == 25 || NavID == 24 || NavID == 10 || NavID == 11 || NavID == 12 || NavID == 13)) //Edge IDs: && (NavID == 14 || NavID == 15 || NavID == 19 || NavID == 20 || NavID == 31 || NavID == 32 || NavID == 3 || NavID == 4))
+    else if(NavID == pathID && pathings[start * 50 + end][pathIndex][0] == 'P' && NavDist <= 15 && !(NavID == 27 || NavID == 26 || NavID == 25 || NavID == 24 || NavID == 10 || NavID == 11 || NavID == 12 || NavID == 13)) //Edge IDs: && (NavID == 14 || NavID == 15 || NavID == 19 || NavID == 20 || NavID == 31 || NavID == 32 || NavID == 3 || NavID == 4))
     {
-        //printf("Edge Turning\n");
+        printf("Edge Turning\n");
         pathIndex++;
         turningAngle = angle;
+        turningCoefficient = 1.1;
+        printf("turning coefficient: %f\n", turningCoefficient);
 
         CurAction = 2;
         Duration = 0;         
@@ -632,7 +637,7 @@ void Game0()
             LED = 1;
             break;
         case 2: //Smooth Turn
-            CurvedTurnTo(RotationZ, turningAngle, 0.9);
+            CurvedTurnTo(RotationZ, turningAngle, turningCoefficient);
            // printf("TurningAngle: %d\n", turningAngle);
             LED = 0;
             break;
