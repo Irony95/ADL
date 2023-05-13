@@ -13,12 +13,12 @@
 #ifndef CSBOT_REAL
 #include <windows.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <math.h>
 #define DLL_EXPORT extern __declspec(dllexport)
 #define false 0
 #define true 1
 #endif
+
 int Duration = 0;
 int CurAction = -1;
 int CurGame = 0;
@@ -43,22 +43,15 @@ int WheelRight = 0;
 int LED = 0;
 int AI_TeamID = 1;   //Robot Team ID.    1:Blue Ream;    2:Red Team.
 int AI_SensorNum = 15;
-int a[100],b[100],c[100],d[100];
-char pointsOfAction[100][100];
 
-char pathing[2500][50][50];
-int nextPointOfAction = 0; 
-int loadedPoints = 0;
+#define CsBot_AI_C//DO NOT delete this line
 
-void CalculateRoute(int arr[7]);
-
-//in units per second
+//YiWei's Stuff
 const double averageSpeed = 73.5;
+void CalculateRoute(int arr[7]);
+int onCar[6] = {0,1,2,3,4,5};
+int nextParcelID = 6;
 
-//structured such that an int is mapped to a point. C01 = 0, C02 = 1, C03 = 2, S01 = 3, S02 = 4, S03 = 5......
-//each point has 50 paths, 1 per stn. Or more simply, index value * 50 is the start, add a the value for end stn i.e.
-//pathings[0 * 50 + 1] is the array for C01 to C02
-//pathings[3 * 50 + 5] is the array for S01 to S03 
 const char *pathings[][50] = {
 {"C01180"},{"C01270","P15214","P14180","P03135","P04090","C02180"},{"C01090","P17180","P25225","P26139","P27180","P07090","C03180"},{"C01090","P17180","S01180"},{"C01090","S02180"},{"C01090","S03180"},{"C01270","S04180"},{"C01270","P15214","P14180","S05180"},{"C01270","P15214","P14180","S06180"},{"C01270","P15214","P14180","S07180"},{"C01270","P16180","P13139","P12225","P11180","S08180"},{"C01090","P17180","P25225","P26139","P27180","S09180"},{"C01090","P19143","P20180","P29270","S10180"},{"C01090","P17180","P25225","P26270","P09180","S11180"},{"C01270","P16180","P13139","P12090","S12180"},{"C01090","P18180","S13180"},{"C01090","P19143","P20180","S14180"},{"C01090","P17180","P25131","P24090","S15180"},{"C01090","P17180"},{"C01090","P18180"},{"C01090","P19180"},{"C01270","P16180"},{"C01270","P15180"},{"C01270","P15214","P14180"},{"C01270","P15214","P14180","P01180"},{"C01270","P15214","P14180","P02180"},{"C01270","P15214","P14180","P03180"},{"C01270","P15214","P14180","P03135","P04180"},{"C01270","P16180","P13139","P12225","P11180","P05180"},{"C01090","P17180","P25225","P26270","P09180","P06180"},{"C01090","P17180","P25225","P26139","P27180","P07180"},{"C01090","P17180","P25131","P24090","P23180","P30180"},{"C01090","P19143","P20180","P32225","P31180"},{"C01090","P19143","P20180","P32180"},{"C01090","P19143","P20180","P29180"},{"C01090","P19143","P20180","P22180"},{"C01090","P19143","P20180"},{"C01270","P16180","P13180"},{"C01270","P16180","P13139","P12180"},{"C01270","P16180","P13139","P12225","P11180"},{"C01270","P16180","P13221","P10180"},{"C01270","P16180","P13139","P12225","P11180","P08180"},{"C01090","P18180","P21180"},{"C01090","P17180","P25131","P24090","P23180"},{"C01090","P17180","P25180"},{"C01090","P17180","P25131","P24180"},{"C01090","P17180","P25225","P26139","P27180"},{"C01090","P17180","P25225","P26180"},{"C01090","P17180","P25225","P26270","P09180"},{"C01090","P17180","P25225","P26139","P27180","P28180"},
 {"C02270","P04315","P03000","P14034","P15090","C01180"},{"C02180"},{"C02090","C03180"},{"C02090","P06000","P09090","P26045","P25000","S01180"},{"C02270","P04315","P03000","P14034","P15090","S02180"},{"C02270","P04315","P03000","P14034","P15090","S03180"},{"C02270","P04315","P03000","P14034","P15090","S04180"},{"C02270","P04315","P03000","S05180"},{"C02270","P04315","P03000","S06180"},{"C02270","P04315","P03000","S07180"},{"C02090","P06270","P05006","S08180"},{"C02090","P07000","S09180"},{"C02090","P07000","P28090","S10180"},{"C02090","P06000","S11180"},{"C02090","P06270","P05006","S08354","P08000","P11045","P12090","S12180"},{"C02090","P07000","P27045","P24090","P23000","S13180"},{"C02090","P07000","P28090","P29000","S14180"},{"C02090","P07000","P27045","P24090","S15180"},{"C02270","P04315","P03000","P14034","P15090","P17180"},{"C02270","P04315","P03000","P14034","P15090","P18180"},{"C02270","P04315","P03000","P14034","P15090","P19180"},{"C02270","P04315","P03000","P14034","P15090","P16180"},{"C02270","P04315","P03000","P14034","P15180"},{"C02270","P04315","P03000","P14180"},{"C02270","P04315","P03000","P01180"},{"C02270","P04315","P03000","P02180"},{"C02270","P04315","P03180"},{"C02270","P04180"},{"C02090","P06270","P05180"},{"C02090","P06180"},{"C02090","P07180"},{"C02090","P30180"},{"C02090","P31180"},{"C02090","P31045","P32180"},{"C02090","P07000","P28090","P29180"},{"C02090","P07000","P28090","P29000","P22180"},{"C02090","P07000","P28090","P29000","P20180"},{"C02270","P04315","P03000","P01090","P10041","P13180"},{"C02090","P06270","P05006","S08354","P08000","P11045","P12180"},{"C02090","P06270","P05006","S08354","P08000","P11180"},{"C02270","P04315","P03000","P01090","P10180"},{"C02090","P06270","P05006","S08354","P08180"},{"C02090","P07000","P27045","P24090","P23000","P21180"},{"C02090","P07000","P27045","P24090","P23180"},{"C02090","P06000","P09090","P26045","P25180"},{"C02090","P07000","P27045","P24180"},{"C02090","P07000","P27180"},{"C02090","P06000","P09090","P26180"},{"C02090","P06000","P09180"},{"C02090","P07000","P28180"},
@@ -79,48 +72,32 @@ const char *pathings[][50] = {
 {"S14000","P20323","P19270","C01180"},{"S14180","P29270","P28180","P07270","C02180"},{"S14180","P32225","P31270","C03180"},{"S14000","P20323","P19270","P17180","S01180"},{"S14000","P20323","P19270","S02180"},{"S14000","P20323","P19270","S03180"},{"S14000","P20323","P19270","S04180"},{"S14000","P20323","P19270","P15214","P14180","S05180"},{"S14000","P20323","P19270","P15214","P14180","S06180"},{"S14180","P29270","P28180","P07270","P04315","P03000","S07180"},{"S14180","P29270","P08174","S08180"},{"S14180","P29270","P28180","S09180"},{"S14180","P29270","S10180"},{"S14180","P22270","P24311","P25225","P26270","P09180","S11180"},{"S14000","P20323","P19270","P18180","P21270","S12180"},{"S14000","P20323","P19270","P18180","S13180"},{"S14180"},{"S14180","P22270","S15180"},{"S14000","P20323","P19270","P17180"},{"S14000","P20323","P19270","P18180"},{"S14000","P20323","P19180"},{"S14000","P20323","P19270","P16180"},{"S14000","P20323","P19270","P15180"},{"S14000","P20323","P19270","P15214","P14180"},{"S14000","P20323","P19270","P15214","P14180","P01180"},{"S14180","P22270","P24311","P25225","P26270","P02180"},{"S14180","P22270","P24311","P25225","P26270","P02180","P03180"},{"S14180","P29270","P08174","P05270","P04180"},{"S14180","P29270","P08174","P05180"},{"S14180","P29270","P28180","P07270","P06180"},{"S14180","P29270","P28180","P07180"},{"S14180","P22270","P23180","P30180"},{"S14180","P32225","P31180"},{"S14180","P32180"},{"S14180","P29180"},{"S14180","P22180"},{"S14000","P20180"},{"S14000","P20323","P19270","P16180","P13180"},{"S14180","P22270","P23000","P21270","P12180"},{"S14180","P29270","P08000","P11180"},{"S14000","P20323","P19270","P16180","P13221","P10180"},{"S14180","P29270","P08180"},{"S14180","P22270","P23000","P21180"},{"S14180","P22270","P23180"},{"S14180","P22270","P24311","P25180"},{"S14180","P22270","P24180"},{"S14180","P22270","P24225","P27180"},{"S14180","P22270","P24311","P25225","P26180"},{"S14180","P22270","P24311","P25225","P26270","P09180"},{"S14180","P29270","P28180"},
 {"S15270","P24311","P25000","P17270","C01180"},{"S15270","P24225","P27180","P07270","C02180"},{"S15090","P22180","P32225","P31270","C03180"},{"S15270","P24311","P25000","S01180"},{"S15090","P22000","P20323","P19270","S02180"},{"S15270","P24311","P25000","P17270","S03180"},{"S15270","P24311","P25000","P17270","S04180"},{"S15270","P24311","P25000","P17270","P15214","P14180","S05180"},{"S15270","P24311","P25225","P26270","P02000","S06180"},{"S15270","P24225","P27180","P07270","P04315","P03000","S07180"},{"S15270","P24225","P27180","P28270","P08174","S08180"},{"S15270","P24225","P27180","S09180"},{"S15090","P22180","P29270","S10180"},{"S15270","P24311","P25225","P26270","P09180","S11180"},{"S15270","P24311","P25000","P17270","P16180","P13139","P12090","S12180"},{"S15090","P22000","P20323","P19270","P18180","S13180"},{"S15090","P22000","S14180"},{"S15180"},{"S15270","P23000","P18270","P17180"},{"S15270","P23000","P18180"},{"S15090","P22000","P20323","P19180"},{"S15270","P23000","P18270","P16180"},{"S15270","P23000","P18270","P15180"},{"S15270","P23000","P18270","P15214","P14180"},{"S15270","P23000","P21278","P13221","P10270","P01180"},{"S15270","P24311","P25225","P26270","P02180"},{"S15270","P24225","P27180","P07270","P04315","P03180"},{"S15270","P24225","P27180","P07270","P04180"},{"S15270","P24225","P27180","P07270","P05180"},{"S15270","P24225","P27180","P07270","P06180"},{"S15270","P24225","P27180","P07180"},{"S15270","P23180","P30180"},{"S15090","P22180","P32225","P31180"},{"S15090","P22180","P32180"},{"S15090","P22180","P29180"},{"S15090","P22180"},{"S15090","P22000","P20180"},{"S15270","P23000","P21278","P13180"},{"S15270","P23000","P21270","P12180"},{"S15270","P23000","P21270","P12225","P11180"},{"S15270","P23000","P21278","P13221","P10180"},{"S15270","P24225","P27180","P28270","P08180"},{"S15270","P23000","P21180"},{"S15270","P23180"},{"S15270","P24311","P25180"},{"S15270","P24180"},{"S15270","P24225","P27180"},{"S15270","P24311","P25225","P26180"},{"S15270","P24311","P25225","P26270","P09180"},{"S15270","P24225","P27180","P28180"},
 };
-//same idea as above ^ 
-const int distanceTo[] = {0,974,1257,222,185,75,115,291,391,541,752,947,1131,864,397,342,593,722,135,235,320,65,155,208,341,441,626,777,802,1014,997,1047,1081,873,793,693,414,150,276,420,276,702,392,672,337,500,688,493,670,897,
-974,0,300,1066,1048,938,748,433,333,183,420,360,552,360,1088,1215,1062,921,998,1098,1183,798,583,468,383,283,67,35,300,150,250,350,430,550,702,962,1142,741,852,636,538,471,1165,871,773,666,470,570,410,410,
-1257,300,0,780,1056,1068,1258,865,765,615,360,120,264,360,1002,800,524,569,830,850,755,1208,1102,900,815,715,427,335,250,150,50,50,130,190,324,424,604,1031,780,576,780,411,750,525,535,378,230,372,410,170,
-222,1066,780,0,120,132,322,589,689,829,1112,564,677,481,679,264,499,402,50,170,255,272,362,456,639,591,914,962,877,631,614,663,891,743,663,452,336,398,574,778,574,905,314,352,115,234,368,227,351,514,
-185,1048,1056,120,0,110,300,558,658,808,1136,771,812,688,506,120,326,572,50,50,135,250,340,430,608,708,893,1097,1126,838,821,870,762,606,526,426,192,372,542,740,542,1085,170,525,235,378,541,371,523,721,
-75,938,1068,132,110,0,190,399,499,649,908,792,950,709,526,252,485,592,60,160,245,140,230,298,449,549,734,906,958,859,842,891,952,765,685,585,324,240,384,550,384,857,302,542,247,392,558,385,541,742,
-115,748,1258,322,300,190,0,126,226,376,721,1243,1143,802,371,480,758,921,250,350,435,50,40,70,176,276,461,578,771,886,986,1086,1166,1038,958,858,552,132,254,394,254,671,530,871,475,666,887,659,619,1093,
-291,433,865,589,558,399,126,0,100,250,554,1026,942,622,540,629,937,1136,374,474,559,174,64,35,50,150,335,427,604,705,805,905,985,1216,1092,1037,701,261,395,255,138,504,679,1086,624,845,735,533,468,892,
-391,333,765,689,658,499,226,100,0,150,554,832,998,478,540,802,1145,1079,518,618,703,318,184,135,50,50,235,307,604,561,661,761,841,1043,1148,1129,874,261,395,255,138,504,792,1029,585,797,591,413,348,782,
-541,183,615,829,808,649,376,250,150,0,701,594,833,550,851,1061,1456,1182,734,834,919,534,364,285,200,100,85,127,534,345,445,545,625,784,983,1232,1133,477,654,471,318,751,1103,1132,657,884,663,473,408,644,
-752,420,360,1112,1136,908,721,554,554,701,0,396,398,396,483,942,878,950,1037,992,1180,687,848,689,495,456,212,155,50,180,280,380,460,586,548,778,958,513,347,215,347,50,735,900,825,690,490,614,446,348,
-947,360,120,564,771,792,1243,1026,832,594,396,0,120,396,954,593,544,403,623,643,779,959,1049,904,819,591,463,365,280,180,50,170,250,334,270,444,624,1015,828,616,828,348,543,353,362,234,110,228,351,50,
-1131,552,264,677,812,950,1143,942,998,833,398,120,0,519,959,631,400,420,661,681,606,1005,1095,942,857,623,636,509,424,324,170,314,365,276,150,300,480,989,744,546,744,290,581,384,394,260,132,254,383,50,
-864,360,360,481,688,709,802,622,478,550,396,396,519,0,1088,834,904,604,494,702,787,804,757,613,528,348,487,385,300,150,300,400,480,610,673,654,975,949,852,636,711,471,784,554,255,401,261,138,50,386,
-397,1088,1002,679,506,526,371,540,540,851,483,954,959,1088,0,362,992,1370,532,412,597,266,419,525,408,600,785,677,485,702,802,902,982,1212,949,1092,746,162,55,155,275,384,252,1358,814,1072,971,1065,1008,749,
-342,1215,800,264,120,252,480,629,802,1061,942,593,631,834,362,0,365,618,170,50,162,370,460,574,780,880,1065,1303,1006,1087,1200,1042,808,645,565,465,224,423,417,590,603,906,50,668,379,550,748,544,731,908,
-593,1062,524,499,326,485,758,937,1145,1456,878,544,400,904,992,365,0,180,353,253,126,553,643,793,1044,1064,1482,1250,963,929,674,516,370,280,200,100,80,736,833,1050,979,710,396,230,444,290,450,622,824,470,
-722,921,569,402,572,592,921,1136,1079,1182,950,403,420,604,1370,618,180,0,446,280,342,646,736,905,1013,753,1043,848,763,663,453,300,346,260,180,50,260,579,573,777,791,711,180,50,228,110,234,362,513,353,
+
+const int distanceTo[] = {0,974,1218,222,185,75,115,291,391,541,720,915,1098,847,381,342,593,707,135,235,320,65,155,208,341,441,626,777,770,997,965,1028,1081,873,793,693,414,150,263,393,263,669,392,657,337,487,661,482,656,865,
+974,0,300,1051,1048,938,748,433,333,183,420,360,552,360,1074,1196,1266,905,998,1098,1183,798,583,468,383,283,67,35,300,150,250,350,430,550,702,955,1346,728,840,636,538,471,1146,855,761,652,470,570,410,410,
+1218,300,0,747,1017,1029,1219,865,765,615,360,120,264,360,987,781,524,559,797,831,755,1169,1102,900,815,715,427,335,250,150,50,50,130,190,324,424,604,1004,768,576,768,411,731,509,508,364,230,359,410,170,
+222,1051,747,0,120,132,322,589,689,860,1088,531,638,464,730,264,499,387,50,170,255,272,362,456,639,616,945,941,856,614,581,645,869,725,645,437,336,398,561,750,561,914,314,337,115,221,341,215,336,481,
+185,1048,1017,120,0,110,300,558,658,808,1103,739,812,671,557,120,326,560,50,50,135,250,340,430,608,708,893,1097,1105,821,789,852,762,606,526,426,192,372,529,712,529,1053,170,510,235,365,514,359,509,689,
+75,938,1029,132,110,0,190,399,499,649,875,760,911,692,511,252,485,577,60,160,245,140,230,298,449,549,734,906,925,842,810,873,952,765,685,585,324,240,371,522,371,825,302,527,247,379,531,374,526,710,
+115,748,1219,322,300,190,0,126,226,376,688,1243,1152,860,356,480,758,905,250,350,435,50,40,70,176,276,461,578,739,886,986,1086,1166,1038,958,858,552,132,241,367,241,638,530,855,475,653,860,647,667,1102,
+291,433,865,589,558,399,126,0,100,250,540,1026,973,679,508,629,937,1120,374,474,559,174,64,35,50,150,335,427,590,705,805,905,985,1216,1123,1037,701,249,369,243,138,489,679,1070,624,832,780,581,516,923,
+391,333,765,689,658,499,226,100,0,150,540,853,1062,535,508,802,1145,1129,518,618,703,318,184,135,50,50,235,307,590,561,661,761,841,1043,1212,1179,874,249,369,243,138,489,802,1079,630,839,636,461,396,835,
+541,183,615,860,808,649,376,250,150,0,701,594,833,594,819,1061,1456,1233,734,834,919,534,364,285,200,100,85,127,534,345,445,545,625,784,983,1283,1133,465,628,459,318,749,1111,1183,702,926,704,521,456,644,
+720,420,360,1088,1103,875,688,540,540,701,0,396,446,396,469,975,936,1016,999,1025,1249,655,828,672,481,456,212,155,50,180,280,380,460,586,596,836,1016,486,336,215,336,50,763,966,814,745,548,614,446,396,
+915,360,120,531,739,760,1243,1026,853,594,396,0,120,396,981,574,644,386,590,624,850,920,1010,934,849,616,463,365,280,180,50,170,250,334,270,436,724,991,885,673,885,396,524,336,335,220,110,215,336,50,
+1098,552,264,638,812,911,1152,973,1062,833,446,120,0,501,1014,612,400,418,628,662,606,966,1056,972,887,648,636,509,424,324,170,314,365,276,150,300,480,1031,790,594,790,330,562,368,367,247,132,241,368,50,
+847,360,360,464,671,692,860,679,535,594,396,396,501,0,1074,795,865,571,479,685,770,787,826,670,585,396,487,385,300,150,300,400,480,610,654,621,945,1017,840,636,780,471,745,521,243,374,249,138,50,370,
+381,1074,987,730,557,511,356,508,508,819,469,981,1014,1074,0,413,1079,1361,514,463,657,251,401,503,377,562,747,659,470,684,784,884,964,1191,980,1179,819,149,55,143,249,370,294,1311,792,1033,1008,1027,1011,780,
+342,1196,781,264,120,252,480,629,802,1061,975,574,612,795,413,0,365,618,170,50,162,370,460,574,780,880,1065,1304,1065,1070,1200,1042,808,645,565,465,224,423,468,639,591,964,50,668,379,538,721,532,716,908,
+593,1266,524,499,326,485,758,937,1145,1456,936,644,400,865,1079,365,0,180,353,253,126,553,643,793,1044,1071,1490,1308,1011,929,674,516,370,280,200,100,80,736,883,1098,966,750,396,230,431,290,436,594,791,470,
+707,905,559,387,560,577,905,1120,1129,1233,1016,386,418,571,1361,618,180,0,446,280,342,747,837,1026,1012,760,1020,829,744,644,436,300,346,260,180,50,260,579,624,826,778,740,180,50,215,110,220,335,480,336,
 };
-//NOTE THAT THE PATH FILE IS LOCATED AT [C:\CoSpaceRobot Studio\ADL-2023\ADL\Bin\path.txt] AND WILL NOT RUN WITHOUT IT
 
-int angleToTurn = 0;
-int needTurnAfterStation = 0;
+//PID
+#define DefaultSpeed 100 //Default Speed
+int Speed = DefaultSpeed;
 int P = 0, I = 0, D = 0, previousError = 0, PID = 0;
-//1,1.25,1
-int highSpeed = 100;
-//higher p = move to cnter faster, d higher is more dampening, higher i = faster reaction to steady state error
-//0.5, 0.01, 4
 double Kp = 1.1, Ki = 0.01, Kd = 6;
-
-//changing dist also means changing turning Cofficient
-int curvedTurnStartDist = 20;
-
-//lower = less sharp, higher = more sharp
-double turningCoefficient = 0.9;
-double startDistance = 0;
-
-#define CsBot_AI_C//DO NOT delete this line
-
-////////////CoSpace System Functions, Please DON't modify./////////////////////
-///////////////////////////////////////////////////////////////////////////////
 
 char TaskString[256];//For Individual Challenge ONLY
 struct Task
@@ -154,67 +131,48 @@ DLL_EXPORT void AddTaskItem(int TaskID, int StationID, int ActionID)
     TaskList[TaskID].ActionID = ActionID;
     printf("Task:(TaskID:%d, StID:%d, ActID:%d)\r\n", TaskID, StationID, ActionID);
 }
-//May not work well in Swarmland. 
+
+int iTurnToGoAhead = 0;
 int TurnTo(int curRot, int targetRot)
 {
-    int angularErrorThreshold = 10;
+    int angularErrorThreshold = 2;
+    int minTuningSpeed = 4;
     int angleDiff = (curRot - targetRot + 360) % 360;
     int turningSpeed;
+   
+    Duration = 128;
+    //SuperDuration = 128; //Uncomment this statement for super Action.
+
+    if (iTurnToGoAhead > 0)
+    {
+        iTurnToGoAhead = iTurnToGoAhead + 1;
+        WheelLeft = 0;
+        WheelRight = 0;
+        if (iTurnToGoAhead > 8) //Stop this turning action after go ahead 8 time units. 
+        {
+            Duration = 0;
+            //SuperDuration = 0;//Uncomment this statement for super Action.
+            iTurnToGoAhead = 0;
+            return 0;
+        }
+        return 1;
+    }
 
     if (angleDiff <= angularErrorThreshold || angleDiff > 360 - angularErrorThreshold)
-    {
-        Duration = 0;
         turningSpeed = 0;
-        return 1;
-    }
     else if (angleDiff <= 180)
-        turningSpeed = angleDiff / 2 + 3;
+        turningSpeed = angleDiff / 2 + minTuningSpeed;
     else
-        turningSpeed = (angleDiff - 360) / 2 - 3;
-        
+        turningSpeed = (angleDiff - 360) / 2 - minTuningSpeed;
     WheelLeft = turningSpeed;
     WheelRight = -WheelLeft;
-    Duration = 128;
+  
+    if (turningSpeed == 0) //Reach the targetRot, continue to go ahead.
+        iTurnToGoAhead = 1;
+
     return 1;
 }
 
-//calculates the difference in angle, +\- with respect to start facing
-int calculateAngleDiff(int start, int end)
-{
-    int angleDiff = (end - start);
-    if (angleDiff > 180) { return angleDiff - 360; }
-    else if (angleDiff < -180) { return angleDiff + 360; }
-    return angleDiff;
-}
-
-
-int CurvedTurnTo(int curRot, int targetRot)
-{
-    int angularErrorThreshold = 20;
-    int angleDiff = calculateAngleDiff(curRot, targetRot);
-
-    //if turning is done
-    if (angleDiff <= angularErrorThreshold && angleDiff >= -angularErrorThreshold)
-    {
-        Duration = 0;
-        return 1;
-    }
-    //turning right
-    if (angleDiff < 0)
-    {
-        WheelLeft = highSpeed;
-        WheelRight = highSpeed-(abs(angleDiff) * turningCoefficient);
-    }
-    //turning left  
-    else
-    {
-        WheelLeft = highSpeed-(abs(angleDiff) * turningCoefficient);
-        WheelRight = highSpeed;
-    }
-    Duration = 128;
-    return 1;
-
-}
 struct DeliveryItem
 {
     int ItemID;
@@ -224,8 +182,7 @@ struct DeliveryItem
     int ItemScore;
     int CurStatus; //1:at Center; 2:on Car; 3:at Station;
 } DeliveryItemList[100]; //All Items
-int onCar[6] = {0,1,2,3,4,5};
-int nextParcelID = 6;
+
 DLL_EXPORT void AddDeliveryItem(int ItemID, int CenterID, int StationID, int ItemScore, int Deadline, int CurStatus)
 {
     if (ItemID < 0 || ItemID>99) {
@@ -247,76 +204,24 @@ DLL_EXPORT void RequestItems(int* Items)
     }
 }
 
-static void listout()
-{
-    /**
-     * Extracts the ItemID, CollectionPtID, ItemScore, and Deadline from the first 100 elements of a DeliveryItemList.
-     *
-     * @param DeliveryItemList A list of delivery items.
-     *
-     * @returns Four arrays containing the ItemID, CollectionPtID, ItemScore, and Deadline of the first 100 elements of the DeliveryItemList.
-     */
-    for(int i=0; i<100; i++)
-    {
-        a[i]=DeliveryItemList[i].ItemID;
-        b[i]=DeliveryItemList[i].CollectionPtID;
-        c[i]=DeliveryItemList[i].ItemScore;
-        d[i]=DeliveryItemList[i].Deadline;
-    }
-    for(int i=0; i<100; i++)
-    {
-        if (i>0 && a[i]<=0) continue;
-        printf("ItemID : %d | ",a[i]);
-        printf("StnID : %d | ",b[i]);
-        printf("Score : %d | ",c[i]);
-        printf("Deadline : %d | ",d[i]);
-        printf("CarStatus : %i| ", DeliveryItemList[i].CurStatus);
-        printf("\n");
-    }
-    printf("**************************\n\n\n");
-}
  
 void GameStart()
 {
 //Add your code here
+
 }
 
+ 
 void AILoopStart()
 {
 //Add your code here
-    if (!loadedPoints)
-    {
-        loadedPoints = true;
-        FILE *fp;
-        fp  = fopen ("path.txt", "r");
-        int i = 0;
-        int j = 0;
-        if (fp != NULL)
-        {
-            while (!feof(fp))
-            {
-                char c = fgetc(fp);
-                 if (c == '\n')
-                {
-                    pointsOfAction[i][j+1] =  '\0';
-                    i++;
-                    j = 0;
-                }
-                else
-                {
-                    pointsOfAction[i][j] = c;
-                    j++;
-                }
-            }
-            fclose(fp);
-        }
-    }
+
 }
 
  
 DLL_EXPORT char* GetTeamName()
 {
-     return "test3";
+     return "Robo_Erectus";
 }
 
 char info[3000];
@@ -350,7 +255,6 @@ DLL_EXPORT void SetGameID(int GameID)
     CurGame = GameID;
 }
 
-
 DLL_EXPORT void SetDataAI(volatile int* packet, volatile int *AI_IN)
 {
 
@@ -375,6 +279,13 @@ DLL_EXPORT void SetDataAI(volatile int* packet, volatile int *AI_IN)
     packet[16] = sum;
 
 }
+DLL_EXPORT void GetCommand(int *AI_OUT)
+{
+    AI_OUT[0] = WheelLeft;
+    AI_OUT[1] = WheelRight;
+    AI_OUT[2] = LED;
+    AI_OUT[3] = MyState;
+}
 
 static void run()
 {
@@ -386,19 +297,12 @@ static void run()
     D = DeltaDist-previousError;
     PID = (Kp*P) + (Ki*I) + (Kd*D);
     previousError = DeltaDist;
-    WheelLeft = highSpeed+PID;
-    WheelRight = highSpeed-PID; 
+    WheelLeft = DefaultSpeed+PID;
+    WheelRight = DefaultSpeed-PID; 
 }
 
 
-DLL_EXPORT void GetCommand(int *AI_OUT)
-{
-    AI_OUT[0] = WheelLeft;
-    AI_OUT[1] = WheelRight;
-    AI_OUT[2] = LED;
-    AI_OUT[3] = MyState;
-}
-
+//YiWei's Arrays
 void swap(int *a, int *b)
 {
     int temp;
@@ -461,7 +365,7 @@ struct Route
 } fastestRoute;
 void CalculateRoute(int arr[7])
 {
-    double runningTime = 0;
+    double runningTime = 2;
     int runningPoints = 0;
 
     //this is a bit of a cheaty hashmap ish solution
@@ -502,7 +406,12 @@ void CalculateRoute(int arr[7])
         }
         visited[DeliveryItemList[arr[i]].CollectionPtID] = 1;
     }
+
+
     double worth = runningPoints - (2 * runningTime);
+
+
+
     if (worth > fastestRoute.worth)
     {
         printf("new high worth, points at %i, runTime at %f, worth of %f | ", runningPoints, runningTime, worth);
@@ -545,178 +454,202 @@ void BruteForceBestPath()
     printf("\n");
 }
 
-void Game0()
-{    
-    char value[] = {pointsOfAction[nextPointOfAction][1], pointsOfAction[nextPointOfAction][2], '\0'};
-    int pointID = atoi(value);
+//calculates the difference in angle, +\- with respect to start facing
+int calculateAngleDiff(int start, int end)
+{
+    int angleDiff = (end - start);
+    if (angleDiff > 180) { return angleDiff - 360; }
+    else if (angleDiff < -180) { return angleDiff + 360; }
+    return angleDiff;
+}
 
-    char angleStr[] = {pointsOfAction[nextPointOfAction][3], pointsOfAction[nextPointOfAction][4], pointsOfAction[nextPointOfAction][5], '\0'};
-    int nextAngle = atoi(angleStr);    
+int CurvedTurnTo(int curRot, int targetRot, double turningCoefficient)
+{
+    int highSpeed = Speed;
+    int angularErrorThreshold = 20;
+    double angleDiff = (double)calculateAngleDiff(curRot, targetRot);
+
+    //if turning is done
+    if (angleDiff <= angularErrorThreshold && angleDiff >= -angularErrorThreshold)
+    {
+        Duration = 0;
+        return 1;
+    }
+    //turning right
+    if (angleDiff < 0)
+    {
+        WheelLeft = highSpeed;
+        WheelRight = highSpeed-(abs(angleDiff) * turningCoefficient);
+    }
+    //turning left  
+    else
+    {
+        WheelLeft = (int)(highSpeed-(abs(angleDiff) * turningCoefficient));
+        WheelRight = highSpeed;
     
-    //printf("Currently going to next point at line %i\n", nextPointOfAction+1);  
+    }
+    Duration = 128;
+    return 1;
+}
+
+//Route
+int route[8]; 
+int routeIndex = 0;
+
+//Pathing
+int start = 0; //Start of the shortest path to a node
+int end = 0; //End of the shortest path to a node
+int pathID;
+int angle;
+int turningAngle;
+int pathIndex = 0;
+
+void Game0()
+{
+    route[0] = 0;
+    
+    Speed = DefaultSpeed;
+
+    //printf("ID = %d, angle = %d\n", ID, angle);
+    //printf("Speed: %d\n", Speed);
+    //printf("Current Point in Route: %d\n", routeIndex);
+    //printf("ID: %d RouteIndex: %d Route: %d PathIndex: %d Angle: %d Start: %d End: %d\n", pathID, routeIndex, route[routeIndex], pathIndex, angle, start, end);
+
+    char value[] = {pathings[start * 50 + end][pathIndex][1], pathings[start * 50 + end][pathIndex][2], '\0'} ;
+    pathID = atoi(value);
+    char value2[] = {pathings[start * 50 + end][pathIndex][3], pathings[start * 50 + end][pathIndex][4], pathings[start * 50 + end][pathIndex][5], '\0'} ;
+    angle = atoi(value2);
+
     if(Duration>0)
     {
         Duration--;
     }
-    else if (needTurnAfterStation)
+    //Collect from Distrubution Centre
+    else if(CtrID == route[routeIndex] + 1 && CtrDist <= 10)
     {
-        Duration = 10;
-        CurAction = 1;
-        needTurnAfterStation = 0;
-        
-    }
-    else if (pointsOfAction[nextPointOfAction][0] == 'D')
-    {
-        char value1[] = {pointsOfAction[nextPointOfAction][1], pointsOfAction[nextPointOfAction][2], '\0'};
-        int id = atoi(value1);
-        char value2[] = {pointsOfAction[nextPointOfAction][3], pointsOfAction[nextPointOfAction][4], pointsOfAction[nextPointOfAction][5], '\0'};
-        int distanceToId = atoi(value2);
-        char value3[] = {pointsOfAction[nextPointOfAction][6], pointsOfAction[nextPointOfAction][7], pointsOfAction[nextPointOfAction][8], '\0'};
-        int heading = atoi(value3);
+        //printf("Collecting\n");
 
-        int headDiff = calculateAngleDiff(RotationZ, heading);
-        if (NavID == id && (NavDist-distanceToId) <= 2)
+        for(int i = 0; i < 6; i++)
         {
-            needTurnAfterStation = 1;
-            angleToTurn = heading;
-            nextPointOfAction++;
-            
-        }
-        else if (NavID == id && (NavDist-distanceToId) <=curvedTurnStartDist && abs(headDiff) < 90+10)
-        {
-            angleToTurn = heading;
-            Duration = 10;
-            CurAction = 2;            
-
-            nextPointOfAction++;
-            
-        }
-        else
-        {
-            CurAction = 4;
-        }
-    }
-
-    
-    else if(pointsOfAction[nextPointOfAction][0] == 'P' && NavID==pointID && NavDist<=6)
-    {
-        angleToTurn = nextAngle;
-        Duration = 10;
-        CurAction = 1;
-        
-
-        nextPointOfAction++;
-        
-    }
-    else if(pointsOfAction[nextPointOfAction][0] == 'P' && NavID==pointID && NavDist<=curvedTurnStartDist && NavDist>6 && abs(calculateAngleDiff(RotationZ, nextAngle)) < 90+10)
-    {
-        angleToTurn = nextAngle;
-        Duration = 10;
-        CurAction = 2;
-        
-        nextPointOfAction++;
-        
-    }
-    else if(pointsOfAction[nextPointOfAction][0] == 'S' && StnID == pointID && StnDist>=-10 && StnDist<=10)
-    {
-        angleToTurn = nextAngle;
-        
-        Duration = 80;
-        CurAction =3;
-        nextPointOfAction++;
-
-
-        //remove from onCar, and set status to delivered
-        for (int i =0;i < 6;i++)
-        {
-            if (StnID == DeliveryItemList[onCar[i]].CollectionPtID)
-            {                
-                onCar[i] = -1;
-            }
-        }
-        for (int i =0;i < 6;i++)
-        {
-            printf("%i, ", onCar[i]);
-        }
-        printf("\n");
-    }
-    else if(pointsOfAction[nextPointOfAction][0] == 'C' && CtrID == pointID && CtrDist>=-10 && CtrDist<=10)
-    {
-        angleToTurn = nextAngle;
-        
-        Duration = 80;
-        CurAction =3;
-        nextPointOfAction++;
-
-        for (int i = 0;i < 6;i++)
-        {
-            if (onCar[i] == -1)
+            if(onCar[i] == -1)
             {
                 onCar[i] = nextParcelID;
                 nextParcelID++;
             }
         }
-        for (int i =0;i < 6;i++)
+        BruteForceBestPath();
+        for (int i = 1; i < 8; i++)
         {
-            printf("%i, ", onCar[i]);
+            if (fastestRoute.pathing[i-1] == -1)
+            {
+                route[i] = 0;
+                break;
+            }
+            route[i] = DeliveryItemList[fastestRoute.pathing[i-1]].CollectionPtID + 2; 
+            printf("%i, ", route[i]);
         }
         printf("\n");
-        listout();
 
-        BruteForceBestPath();
-        
+        routeIndex = 1;
+        pathIndex = 0;
+        start = route[0]; 
+        end = route[routeIndex]; 
+
+        CurAction = 1;
+        Duration = 80;
     }
-    else if (pointsOfAction[nextPointOfAction][0] == 'B')
+    //Deliver to Collection Station
+    else if(StnID == route[routeIndex] - 2 && StnDist >= 0 && StnDist <= 10)
     {
-        char backDurStr[] = {pointsOfAction[nextPointOfAction][1], pointsOfAction[nextPointOfAction][2], pointsOfAction[nextPointOfAction][3], '\0'};
-        Duration = atoi(backDurStr);
-        char newAngle[] = {pointsOfAction[nextPointOfAction][4], pointsOfAction[nextPointOfAction][5], pointsOfAction[nextPointOfAction][6], '\0'};
-        angleToTurn = atoi(newAngle);
-        CurAction = 5;
-        nextPointOfAction++;
-        
+        //printf("Delivering\n");
+        routeIndex++;
+        pathIndex = 0;
+        start = route[routeIndex - 1];
+        end = route[routeIndex];
+
+        for (int i = 0; i < 6; i++)
+        {
+            if(StnID == DeliveryItemList[onCar[i]].CollectionPtID)
+                onCar[i] = -1;
+        }
+
+        CurAction = 1;
+        Duration = 80;
     }
+    //Turn in Roundabout
+    else if(NavID == pathID && pathings[start * 50 + end][pathIndex][0] == 'P' && NavDist <= 7 && (NavID == 27 || NavID == 26 || NavID == 25 || NavID == 24 || NavID == 10 || NavID == 11 || NavID == 12 || NavID == 13))
+    {
+        //printf("Turning\n");
+        pathIndex++;
+        turningAngle = angle;
+
+        CurAction = 3;
+        Duration = 0;        
+    }
+    //Smooth turn 
+    else if(NavID == pathID && pathings[start * 50 + end][pathIndex][0] == 'P' && NavDist <= 20 && !(NavID == 27 || NavID == 26 || NavID == 25 || NavID == 24 || NavID == 10 || NavID == 11 || NavID == 12 || NavID == 13)) //Edge IDs: && (NavID == 14 || NavID == 15 || NavID == 19 || NavID == 20 || NavID == 31 || NavID == 32 || NavID == 3 || NavID == 4))
+    {
+        //printf("Edge Turning\n");
+        pathIndex++;
+        turningAngle = angle;
+
+        CurAction = 2;
+        Duration = 0;         
+    }
+    //Turn after collecting
+    else if(CtrID == pathID && pathings[start * 50 + end][pathIndex][0] == 'C' && CtrDist >= -10 && CtrDist <= 10)
+    {
+        //printf("Turning\n");
+        pathIndex++;
+        turningAngle = angle;
+
+        CurAction = 3;
+        Duration = 0;        
+    }
+    //Turn after delivering
+    else if(StnID == pathID && pathings[start * 50 + end][pathIndex][0] == 'S' && StnDist >= -10 && StnDist <= 10)
+    {
+        //printf("Turning\n");
+        pathIndex++;
+        turningAngle = angle;
+
+        CurAction = 3;
+        Duration = 0;        
+    }
+    //Move
     else if(true)
     {
-        Duration = 0;
+        Duration = 0; 
         CurAction = 4;
     }
+
     switch(CurAction)
     {
-        case 1:
-            LED=0;
-            TurnTo(RotationZ, angleToTurn);
+        case 1: //Deliver/Collect
+            WheelLeft = 0;
+            WheelRight = 0;
+
+            LED = 1;
             break;
-        case 2:
-            LED=0;
-            CurvedTurnTo(RotationZ, angleToTurn);
+        case 2: //Smooth Turn
+            CurvedTurnTo(RotationZ, turningAngle, 0.9);
+           // printf("TurningAngle: %d\n", turningAngle);
+            LED = 0;
             break;
-        case 3:
-            WheelLeft=0;
-            WheelRight=0;
-            LED=1;
-            if (angleToTurn < RotationZ-30 || angleToTurn > RotationZ+30)
-            {
-                needTurnAfterStation = 1;
-            }
+        case 3: //Turn
+            TurnTo(RotationZ, turningAngle);
+            //printf("TurningAngle: %d\n", turningAngle);
+            LED = 0;
             break;
-        case 4:
+        case 4: //Move
             run();
             break;
-        case 5:
-            WheelLeft = -highSpeed;
-            WheelRight = -highSpeed;
-            
-            if (angleToTurn < RotationZ-30 || angleToTurn > RotationZ+30)
-            {
-                needTurnAfterStation = 1;
-            }
+
         default:
             break;
     }
 
 }
-
 
 DLL_EXPORT void AILoop()
 {
@@ -734,5 +667,3 @@ DLL_EXPORT void AILoop()
         break;
     }
 }
-
-
