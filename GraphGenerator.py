@@ -15,13 +15,15 @@ routeCoefficient = [
     ("P27", "P26", 1.3),
     ("P27", "P24", 1.3),
 
-    ("P21", "S12", 1.4),
-    ("P02", "P09", 1.4),
-    ("P08", "P28", 1.4),
+    ("P21", "S12", 1.3),
+    ("P02", "P09", 1.3),
+    ("P08", "P28", 1.3),
 ]
 #if we turn more than this angle, we add the coefficient
 minTurnCoefficient = 30
 turnCoefficient = 1.2
+
+roundaboutPoints = ["P13","P12","P11","P10","P24","P25","P26","P27"]
 
 class Node:
     def __init__(self, x, y, identifier) -> None:
@@ -66,10 +68,28 @@ class Node:
             return 270+acuteAngle
         #quadrant 4
         return 90-acuteAngle
-        
 
-
-
+    def RoundaboutAngleTo(self, point):
+        roundaboutAngle = 20
+        #Lower
+        if (self.identifier == "P13" or self.identifier == "P25"):
+            if (nodes[point].x > self.x):
+                return 90+roundaboutAngle
+            return 270-roundaboutAngle
+        #upper
+        if (self.identifier == "P11" or self.identifier == "P27"):
+            if (nodes[point].x > self.x):
+                return 90-roundaboutAngle
+            return 270+roundaboutAngle
+        #left
+        if (self.identifier == "P10" or self.identifier == "P26"):
+            if (nodes[point].y > self.y):
+                return 180-roundaboutAngle
+            return 0+roundaboutAngle
+        #right
+        if (nodes[point].y > self.y):
+            return 180+roundaboutAngle
+        return 360-roundaboutAngle
 
 def main():   
     global nodes 
@@ -171,6 +191,7 @@ def exportNodes():
         for j, end in enumerate(nodes[start].direction):
             truePath = "{"
             previousAngle = -360
+            withinARoundAbout = False
             for i, point in enumerate(nodes[start].direction[end]):
 
 
@@ -180,9 +201,22 @@ def exportNodes():
                     angle = nodes[point].AngleTo(nodes[start].direction[end][i+1])
 
                     #we do not bother to add the point, as we do not need to turn at this angle
-                    if (abs(angle - previousAngle) < minTurnCoefficient):
+                    if (abs(angle - previousAngle) < minTurnCoefficient and not withinARoundAbout):
                         previousAngle = angle
                         continue
+                    
+                    #if we are in a roundabout, and the next point is within a roundabout, we skip the current location
+                    #as it does not help with navigation
+                    elif (withinARoundAbout):
+                        if (nodes[start].direction[end][i+1] in roundaboutPoints):                            
+                            continue
+                        else:
+                            withinARoundAbout = False
+
+                    elif (not withinARoundAbout and point in roundaboutPoints):
+                        angle = nodes[point].RoundaboutAngleTo(nodes[start].direction[end][i+1])
+                        withinARoundAbout = True
+
                     previousAngle = angle
 
                     angle = str(angle)
@@ -196,11 +230,8 @@ def exportNodes():
         file.write("\n")
 
     file.write("};")
-    file.close()
-
-
-    file = open("distances.txt", "w")
-    file.write("const int dist[] = {")
+    file.write("\n\n\n")
+    file.write("const int distanceTo[] = {")
     for k, start in enumerate(nodes):
         if start[0] == "P":
             continue
