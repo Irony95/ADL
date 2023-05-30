@@ -4,7 +4,7 @@ from tqdm import tqdm
 nodes = {}
 maxDist = 9999999
 exportDelimiter = ","
-#the two points indicating the route, and the coefficient. 
+#the two points indicating the edge, and the coefficient. 
 routeCoefficient = [
     ("P13", "P12", 1.3),
     ("P13", "P10", 1.3),
@@ -18,9 +18,11 @@ routeCoefficient = [
     ("P21", "S12", 1.3),
     ("P02", "P09", 1.3),
     ("P08", "P28", 1.3),
+    ("P30", "P23", 1.3),
 ]
 #if we turn more than this angle, we add the coefficient
 minTurnCoefficient = 30
+#add this cofficient when we are turning, as it takes longer to turn than to drive straight
 turnCoefficient = 1.2
 
 roundaboutPoints = ["P13","P12","P11","P10","P24","P25","P26","P27"]
@@ -184,7 +186,9 @@ def populateNodes():
 
 def exportNodes():
     file = open("pathing.txt", "w")
-    file.write("const char *pathings[][50] = {\n")
+    file.write(f"const int amountOfNodes = {len(nodes)};\n")
+
+    file.write(f"const char *pathings[][{len(nodes)}] =" + " {\n")
     for k, start in enumerate(nodes):
         if (start[0] == "P"):
             continue
